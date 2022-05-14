@@ -1,0 +1,22 @@
+{
+  "name": "mspretro-client",
+  "version": "2.0.0",
+  "description": "The client for MSP Retro",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-packager . MSPRetro --icon= ./logo.ico --platform=win32 --arch=x64"
+  },
+  "author": "Polo",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^11.1.1",
+    "electron-builder": "^22.9.1"
+  },
+  "dependencies": {
+    "discord-rpc": "^4.0.1",
+    "electron-packager": "^15.2.0",
+    "node-fetch": "^2.6.5",
+    "xml2js": "^0.4.23"
+  }
+}
