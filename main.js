@@ -20,31 +20,66 @@ const { createHash } = require("crypto");
 //     break;
 // };
 
+let cookie = false;
+
 app.commandLine.appendSwitch("ppapi-flash-path", join(__dirname, "/plugins/pepflashplayer64_23_0_0_162.dll"));
 app.commandLine.appendSwitch("ppapi-flash-version", "17.0.0.169");
 
 app.whenReady().then(async () => {
-  session.defaultSession.webRequest.onBeforeSendHeaders({ urls: [ "https://api.mspretro.com/Service" ] }, (details, callback) => {
+  session.defaultSession.cookies.get({  })
+  .then((cookies) => {
+  }).catch((error) => {
+    console.log(error)
+  });
+
+  // Query all cookies associated with a specific url.
+  session.defaultSession.cookies.get({ url: "https://mspretro-api.glitch.me/Service" })
+  .then((cookies) => {
+  }).catch((error) => {
+  console.log(error)
+  });
+
+  // Set a cookie with the given cookie data;
+  // may overwrite equivalent cookies if they exist.
+  const cookieData = { url: "https://mspretro-api.glitch.me", name: "SessionId", value: "value of the SessionId" }
+  session.defaultSession.cookies.set(cookieData)
+  .then(() => {
+    // success
+  }, (error) => {
+    console.error(error)
+  })
+
+  session.defaultSession.webRequest.onBeforeSendHeaders({ urls: [ "https://mspretro-api.glitch.me/Service" ] }, (details, callback) => {
     let action;
-  
-    action = details.requestHeaders.SOAPAction.replace("http://moviestarplanet.com/", "");
-    action = action.replace(new RegExp('"', "gi"), "");  
+    let cookieC;
 
-    const xml = details.uploadData[0].bytes.toString();
+    if (cookie && typeof cookie == "string") {
+      details.requestHeaders["cookie"] = "SessionId=" + getCookie(cookie, "SessionId");
+      cookieC = "SessionId=" + getCookie(cookie, "SessionId");
+      cookie = false;
+    } else {
+      cookieC;
+    }
 
-    parseString(xml, (err, result) => {
-        const json = JSON.stringify(result);
-        const checksum = createChecksum(JSON.stringify(json), action);
+    parseString(details.uploadData[0].bytes.toString(), (err, result) => {
+      action = details.requestHeaders.SOAPAction.replace("http://moviestarplanet.com/", "");
+      action = action.replace(new RegExp('"', "gi"), "");
 
-        console.log(action, checksum);
+      const json = JSON.stringify(result);
+      const checksum = createChecksum(json + getCookie(cookieC, "SessionId"), action);
 
-        details.requestHeaders["checksum"] = checksum;
-        callback({ requestHeaders: details.requestHeaders });
+      console.log("[CheckSum Client]: " + json + getCookie(cookieC, "SessionId"), action);
+
+      details.requestHeaders["checksum_c"] = checksum;
+      callback({ requestHeaders: details.requestHeaders });
     });
   });
 
-  const config = await fetch("https://api.mspretro.com/getConfig")
-    .then(res => res.json());
+  const response = await fetch("https://mspretro-api.glitch.me/getConfig");
+  cookie = response.headers.get("set-cookie");
+  console.log("[Cookie Generated]: " + cookie);
+
+  const config = await response.json();
 
     if (config.version > 2) {
       dialog.showMessageBox(null, {
@@ -84,7 +119,7 @@ app.whenReady().then(async () => {
       });
 
       win.removeMenu();
-      win.loadURL("https://cdn.mspretro.com/");
+      win.loadURL("https://cdn.mspretro.com/dev.html");
 
       let isAccepted = false;
       disclamer();
@@ -150,6 +185,32 @@ app.whenReady().then(async () => {
         event.preventDefault();
         win.loadURL(url);
       });
+
+      try {
+        win.webContents.debugger.attach("1.3");
+      } catch (err) {
+        console.log("Debugger attach failed: ", err);
+      }
+      
+      win.webContents.debugger.on("detach", (event, reason) => {
+        console.log("Debugger detached due to: ", reason);
+      });
+            
+      win.webContents.debugger.on("message", (event, method, params) => {
+        if (method !== "Network.responseReceived") return;
+        if (params.response.url !== "https://mspretro-api.glitch.me/Service") return;
+
+        win.webContents.debugger.sendCommand("Network.getResponseBody", { requestId: params.requestId }).then(function(response) {
+          parseString(response.body, (err, result) => {
+            const json = JSON.stringify(result);
+            const checksum = createChecksum(json);
+
+            if (checksum !== params.response.headers.checksum_s) process.exit();
+          });
+        });
+      });
+        
+      win.webContents.debugger.sendCommand("Network.enable");
   };
 });
 
@@ -178,27 +239,24 @@ client.login({ clientId : "901569099157626910" })
 .then(() => console.log("[Success] : The RPC is loaded."))
 .catch(() => console.log("[Error] : Unable to load RPC on Discord."));
 
-function createChecksum(args, action) {
-  var sha = createHash("sha1");
-  var split = joinArray(args);
-  var salt = "123456";
+function createChecksum(args, action = null) {
+  let sha = createHash("sha1");
+  const salt = "123456";
 
-  sha.update(split + args + action + salt);
-  var hash = sha.digest("hex");
+  sha.update(args + action + salt);
+  const hash = sha.digest("hex");
+
   return hash;
 }
 
-function joinArray(array) {
-  var endResult = "";
-  for (var arg of array) {
-    if (Array.isArray(arg)) {
-      endResult += joinArray(arg);
-      continue;
-    }
-    if (arg == undefined || arg == null || arg.hasOwnProperty("Ticket")) {
-      continue;
-    }
-    endResult += arg;
-  }
-  return endResult;
+function getCookie(cookies, name) {
+  cookies = cookies.split(";");
+
+  for (let i = 0; i < cookies.length; i++) {
+    c = cookies[i].split("=");
+
+    if (c[0] == name) return c[1];
+  };
+
+  return "";
 }

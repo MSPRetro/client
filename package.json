@@ -4,7 +4,7 @@
   "description": "The client for MSP Retro",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "electron . --no-warnings",
     "build": "electron-packager . MSPRetro --icon= ./logo.ico --platform=win32 --arch=x64"
   },
   "author": "Polo",
