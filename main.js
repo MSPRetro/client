@@ -26,31 +26,10 @@ app.commandLine.appendSwitch("ppapi-flash-path", join(__dirname, "/plugins/pepfl
 app.commandLine.appendSwitch("ppapi-flash-version", "17.0.0.169");
 
 app.whenReady().then(async () => {
-  session.defaultSession.cookies.get({  })
-  .then((cookies) => {
-  }).catch((error) => {
-    console.log(error)
-  });
-
-  // Query all cookies associated with a specific url.
-  session.defaultSession.cookies.get({ url: "https://mspretro-api.glitch.me/Service" })
-  .then((cookies) => {
-  }).catch((error) => {
-  console.log(error)
-  });
-
-  // Set a cookie with the given cookie data;
-  // may overwrite equivalent cookies if they exist.
-  const cookieData = { url: "https://mspretro-api.glitch.me", name: "SessionId", value: "value of the SessionId" }
-  session.defaultSession.cookies.set(cookieData)
-  .then(() => {
-    // success
-  }, (error) => {
-    console.error(error)
-  })
-
-  session.defaultSession.webRequest.onBeforeSendHeaders({ urls: [ "https://mspretro-api.glitch.me/Service" ] }, (details, callback) => {
+  session.defaultSession.webRequest.onBeforeSendHeaders({ urls: [ "https://api.mspretro.com/Service" ] }, (details, callback) => {
     let action;
+
+    /*
     let cookieC;
 
     if (cookie && typeof cookie == "string") {
@@ -60,24 +39,23 @@ app.whenReady().then(async () => {
     } else {
       cookieC;
     }
+    */
 
     parseString(details.uploadData[0].bytes.toString(), (err, result) => {
       action = details.requestHeaders.SOAPAction.replace("http://moviestarplanet.com/", "");
       action = action.replace(new RegExp('"', "gi"), "");
 
       const json = JSON.stringify(result);
-      const checksum = createChecksum(json + getCookie(cookieC, "SessionId"), action);
-
-      console.log("[CheckSum Client]: " + json + getCookie(cookieC, "SessionId"), action);
+      const checksum = createChecksum(json /* + getCookie(cookieC, "SessionId") */, action);
 
       details.requestHeaders["checksum_c"] = checksum;
       callback({ requestHeaders: details.requestHeaders });
     });
   });
 
-  const response = await fetch("https://mspretro-api.glitch.me/getConfig");
-  cookie = response.headers.get("set-cookie");
-  console.log("[Cookie Generated]: " + cookie);
+  const response = await fetch("https://api.mspretro.com/getConfig");
+  // cookie = response.headers.get("set-cookie");
+  // console.log("[Cookie Generated]: " + cookie);
 
   const config = await response.json();
 
@@ -190,7 +168,7 @@ app.whenReady().then(async () => {
         win.webContents.debugger.attach("1.3");
       } catch (err) {
         console.log("Debugger attach failed: ", err);
-      }
+      };
       
       win.webContents.debugger.on("detach", (event, reason) => {
         console.log("Debugger detached due to: ", reason);
@@ -198,7 +176,7 @@ app.whenReady().then(async () => {
             
       win.webContents.debugger.on("message", (event, method, params) => {
         if (method !== "Network.responseReceived") return;
-        if (params.response.url !== "https://mspretro-api.glitch.me/Service") return;
+        if (params.response.url !== "https://api.mspretro.com/Service") return;
 
         win.webContents.debugger.sendCommand("Network.getResponseBody", { requestId: params.requestId }).then(function(response) {
           parseString(response.body, (err, result) => {
@@ -220,7 +198,7 @@ client.on("ready", () => {
   client.request("SET_ACTIVITY", {
     pid: process.pid,
     activity : {
-      details : "A MSP retro private server, like in 2010.",
+      details : "A retro private server for MovieStarPlanet.",
       assets : {
       large_image : "logo",
       },
@@ -241,14 +219,12 @@ client.login({ clientId : "901569099157626910" })
 
 function createChecksum(args, action = null) {
   let sha = createHash("sha1");
-  const salt = "123456";
 
-  sha.update(args + action + salt);
-  const hash = sha.digest("hex");
+  sha.update(args + action + "NYRL4XSpQi!TgFTmKfYmEXxDNM#bQhba4K#PEahD");
+  return sha.digest("hex");
+};
 
-  return hash;
-}
-
+/*
 function getCookie(cookies, name) {
   cookies = cookies.split(";");
 
@@ -260,3 +236,4 @@ function getCookie(cookies, name) {
 
   return "";
 }
+*/
