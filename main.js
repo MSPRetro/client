@@ -20,8 +20,6 @@ const { createHash } = require("crypto");
 //     break;
 // };
 
-let cookie = false;
-
 app.commandLine.appendSwitch("ppapi-flash-path", join(__dirname, "/plugins/pepflashplayer64_23_0_0_162.dll"));
 app.commandLine.appendSwitch("ppapi-flash-version", "17.0.0.169");
 
@@ -62,11 +60,11 @@ app.whenReady().then(async () => {
     if (config.version > 2) {
       dialog.showMessageBox(null, {
         type: "info",
-        title: "MSP Retro - Update",
+        title: "MSPRetro - Update",
         buttons: [ "Update" ],
         noLink: true,
         defaultId: 0,
-        message: "A new version is available. Please download it to continue playing MSP Retro."
+        message: "A new version is available. Please download it to continue playing MSPRetro."
       })
       .then(() => {
         shell.openExternal("https://mspretro.com");
@@ -75,7 +73,7 @@ app.whenReady().then(async () => {
     } else if (config.maintenance.status) {
       dialog.showMessageBox(null, {
         type: "warning",
-        title: "MSP Retro - Maintenance",
+        title: "MSPRetro - Maintenance",
         buttons: [ ],
         noLink: true,
         defaultId: 0,
@@ -88,7 +86,7 @@ app.whenReady().then(async () => {
       const win = new BrowserWindow({
         width: 800,
         height: 600,
-        title: "MSP Retro",
+        title: "MSPRetro",
         icon: __dirname + "/logo.png",
         show: false,
         webPreferences: {
@@ -97,7 +95,7 @@ app.whenReady().then(async () => {
       });
 
       win.removeMenu();
-      win.loadURL("https://cdn.mspretro.com/dev.html");
+      win.loadURL("https://cdn.mspretro.com");
 
       let isAccepted = false;
       disclamer();
@@ -105,7 +103,7 @@ app.whenReady().then(async () => {
       function disclamer() {
         dialog.showMessageBox(null, {
           type: "info",
-          title: "MSP Retro - Disclamer",
+          title: "MSPRetro - Disclamer",
           buttons: [ "I refuse - Close", "Join our Discord server", "I agree - Play" ],
           noLink: true,
           defaultId: 0,
@@ -137,22 +135,22 @@ app.whenReady().then(async () => {
       globalShortcut.register("Alt+CommandOrControl+C", () => {
         dialog.showMessageBox(null, {
           type: "question",
-          title: "MSP Retro - Clear the cache",
+          title: "MSPRetro - Clear the cache",
           buttons: [ "Clear the cache", "Cancel" ],
           noLink: true,
           defaultId: 0,
-          message: "Do you want to clear the cache stored by MSP Retro?"
+          message: "Do you want to clear the cache stored by MSPRetro?"
         })
         .then((box) => {
           if (box.response == 0) win.webContents.session.clearCache()
           .then(() => {
             dialog.showMessageBox(null, {
               type: "info",
-              title: "MSP Retro - Success",
+              title: "MSPRetro - Success",
               buttons: [ ],
               noLink: true,
               defaultId: 0,
-              message: "The MSP Retro cache has been cleared!"
+              message: "The MSPRetro cache has been cleared!"
             })
             .then(() => console.log("[Cache] : The cache has been cleared."));
           });
