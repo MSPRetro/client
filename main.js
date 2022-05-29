@@ -46,7 +46,7 @@ app.whenReady().then(async () => {
       const json = JSON.stringify(result);
       const checksum = createChecksum(json /* + getCookie(cookieC, "SessionId") */, action);
 
-      details.requestHeaders["checksum_c"] = checksum;
+      details.requestHeaders["checksum-client"] = checksum;
       callback({ requestHeaders: details.requestHeaders });
     });
   });
@@ -117,7 +117,7 @@ app.whenReady().then(async () => {
 
                 break;
               case 1:
-                shell.openExternal(config.discord);
+                shell.openExternal("https://discord.gg/bwa9aCr");
                 disclamer();
 
                 break;
@@ -181,7 +181,7 @@ app.whenReady().then(async () => {
             const json = JSON.stringify(result);
             const checksum = createChecksum(json);
 
-            if (checksum !== params.response.headers.checksum_s) process.exit();
+            if (checksum !== params.response.headers["checksum-server"]) process.exit();
           });
         });
       });
