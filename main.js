@@ -5,46 +5,35 @@ const  fetch = require("node-fetch");
 const { join } = require("path");
 const { createHash } = require("crypto");
 
-// let pluginName;
+let pluginName;
+const CLIENT_VERSION = 5;
 
-// switch (process.platform) {
-//   case "win32":
-//     pluginName = "/plugins/pepflashplayer64_23_0_0_162.dll"
-//     break;
-//     // pluginName = '/plugins/pepflashplayer32_23_0_0_162.dll' for 32 bits
-//   case "darwin":
-//     pluginName = "/plugins/PepperFlashPlayer.plugin"
-//     break;
-//   case "linux":
-//     pluginName = "/plugins/libpepflashplayer.so"
-//     break;
-// };
+switch (process.platform) {
+  case "win32":
+    pluginName = "/plugins/pepflashplayer64_23_0_0_162.dll"
+    break;
+    // pluginName = '/plugins/pepflashplayer32_23_0_0_162.dll' for 32 bits
+  case "darwin":
+    pluginName = "/plugins/PepperFlashPlayer.plugin"
+    break;
+  case "linux":
+    pluginName = "/plugins/libpepflashplayer.so"
+    break;
+};
 
-app.commandLine.appendSwitch("ppapi-flash-path", join(__dirname, "/plugins/pepflashplayer64_23_0_0_162.dll"));
+app.commandLine.appendSwitch("ppapi-flash-path", join(__dirname, pluginName));
 app.commandLine.appendSwitch("ppapi-flash-version", "17.0.0.169");
 
 app.whenReady().then(async () => {
   session.defaultSession.webRequest.onBeforeSendHeaders({ urls: [ "https://api.mspretro.com/Service" ] }, (details, callback) => {
     let action;
 
-    /*
-    let cookieC;
-
-    if (cookie && typeof cookie == "string") {
-      details.requestHeaders["cookie"] = "SessionId=" + getCookie(cookie, "SessionId");
-      cookieC = "SessionId=" + getCookie(cookie, "SessionId");
-      cookie = false;
-    } else {
-      cookieC;
-    }
-    */
-
     parseString(details.uploadData[0].bytes.toString(), (err, result) => {
       action = details.requestHeaders.SOAPAction.replace("http://moviestarplanet.com/", "");
       action = action.replace(new RegExp('"', "gi"), "");
 
       const json = JSON.stringify(result);
-      const checksum = createChecksum(json /* + getCookie(cookieC, "SessionId") */, action);
+      const checksum = createChecksum(json, action);
 
       details.requestHeaders["checksum-client"] = checksum;
       callback({ requestHeaders: details.requestHeaders });
@@ -52,12 +41,10 @@ app.whenReady().then(async () => {
   });
 
   const response = await fetch("https://api.mspretro.com/getConfig");
-  // cookie = response.headers.get("set-cookie");
-  // console.log("[Cookie Generated]: " + cookie);
 
   const config = await response.json();
 
-    if (config.version > 2) {
+    if (config.version != CLIENT_VERSION) {
       dialog.showMessageBox(null, {
         type: "info",
         title: "MSPRetro - Update",
@@ -104,7 +91,7 @@ app.whenReady().then(async () => {
         dialog.showMessageBox(null, {
           type: "info",
           title: "MSPRetro - Disclamer",
-          buttons: [ "I refuse - Close", "Join our Discord server", "I agree - Play" ],
+          buttons: [ "I refuse - Close", "Join our Telegram news channel", "Join our Telegram chat channel", "I agree - Play" ],
           noLink: true,
           defaultId: 0,
           message: config.disclamer
@@ -114,16 +101,21 @@ app.whenReady().then(async () => {
             switch (box.response) {
               case 0:
                 process.exit();
-
+                
                 break;
+
               case 1:
-                shell.openExternal("https://discord.gg/bwa9aCr");
+                shell.openExternal("https://t.me/mspretro");
                 disclamer();
 
                 break;
               case 2:
+                shell.openExternal("https://t.me/mspretro_chat");
+                disclamer();
+
+                break;
+              case 3:
                 win.show();
-                // win.maximize();
                 isAccepted = true;
 
                 break;
@@ -204,8 +196,8 @@ client.on("ready", () => {
         label : "🎮 Play" ,
         url : "https://mspretro.com"
       }, {
-      label : "📢 Support server",
-      url : "https://discord.gg/bwa9aCr"
+      label : "📢 Join the news channel",
+      url : "https://t.me/mspretro"
       }]
     }
   });
@@ -218,20 +210,6 @@ client.login({ clientId : "901569099157626910" })
 function createChecksum(args, action = null) {
   let sha = createHash("sha1");
 
-  sha.update(args + action + "NYRL4XSpQi!TgFTmKfYmEXxDNM#bQhba4K#PEahD");
+  sha.update(args + action + "KmSqayB#ep8&dje!9k7!XzJAtCG!cFFe@Ebsy7c9");
   return sha.digest("hex");
 };
-
-/*
-function getCookie(cookies, name) {
-  cookies = cookies.split(";");
-
-  for (let i = 0; i < cookies.length; i++) {
-    c = cookies[i].split("=");
-
-    if (c[0] == name) return c[1];
-  };
-
-  return "";
-}
-*/

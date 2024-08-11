@@ -1,11 +1,12 @@
 {
   "name": "mspretro-client",
-  "version": "2.0.0",
-  "description": "The client for MSP Retro",
+  "version": "5.0.0",
+  "description": "The client for MSPRetro",
   "main": "main.js",
   "scripts": {
     "start": "electron . --no-warnings",
-    "build": "electron-packager . MSPRetro --icon= ./logo.ico --platform=win32 --arch=x64"
+    "build-windows": "electron-packager . MSPRetro --platform=win32 --arch=x64",
+    "build-darwin": "electron-packager . MSPRetro --arch=x64 --asar-unpack='plugins/PepperFlashPlayer.plugin' --platform=darwin"
   },
   "author": "Polo",
   "license": "ISC",
